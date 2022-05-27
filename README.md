@@ -1,0 +1,3 @@
+# Permutation Importance class
+It is made for evaluation feature importance.
+It uses cross validation ...
