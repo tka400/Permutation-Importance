@@ -5,8 +5,8 @@ import numpy as np
 import random
 import pandas as pd
 
-X, y = datasets.make_classification(n_samples=500, n_classes=3,
-                                    n_features=10, n_informative=5)
+X, y = datasets.make_classification(n_samples=600, n_classes=3,
+                                    n_features=10, n_informative=3)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 
@@ -100,6 +100,7 @@ class PermutationImportance(object):
         self.model = model
         self.cv = cv
         self.importance = []
+        self.f_score = []
 
     def evaluate_it(self):
         original_score = self.model.cv(X, y, cv=self.cv).mean()
@@ -108,16 +109,27 @@ class PermutationImportance(object):
             X_new = X.copy()
             np.random.shuffle(X_new[:, i])
 
-            cv = self.model.cv(X_new, y, cv=self.cv).mean()
-            self.importance.append(np.array(cv - original_score))
+            feature_score = self.model.cv(X_new, y, cv=self.cv).mean()
+            self.f_score.append(feature_score)
+            self.importance.append(feature_score - original_score)
 
         return self.importance
 
+CV = 3
 clf = KNN()
-cv = clf.cv(X, y, cv=5)
+cv = clf.cv(X, y, cv=CV)
 
 print("Cross validation score:", cv, " Its mean:", str(cv.mean())[:4])
+print("Starting evaluate feature importance...\n")
 
-importance = PermutationImportance(clf, X, y, cv=5)
+imp = PermutationImportance(clf, X, y, cv=CV)
+imp_per_feature = imp.evaluate_it()
+
+print("Feature importance by Permutation:")
+
+for i, score in enumerate(imp_per_feature):
+    if score < 0:
+        print("feature", i, "its importance", str(score * (-1.0))[:4])
+
 
 
