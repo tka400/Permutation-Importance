@@ -10,7 +10,7 @@ X, y = datasets.make_classification(n_samples=500, n_classes=3,
 
 X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-class KNN:
+class KNN(object):
     def __init__(self, k=3):
         self.k = k
         self.task = None
@@ -94,30 +94,30 @@ class KNN:
 
         return np.array(score)
 
-# метод оценки важности признаков (permutation importance)
-# def feature_importance(self, X_res, y_res, cv=5):
-#     clf = KNN()
-#     original = clf.cv(X_res, y_res, cv=cv, disable=True).mean()
-#
-#     importance = []
-#
-#     for i in tq(range(X_res.shape[1]), desc="Оценка важности признаков"):
-#         X_new = X_res.copy()
-#         np.random.shuffle(X_new[:, i])
-#
-#         cv = clf.cv(X_new, y_res, cv=5, disable=True)
-#         importance.append(np.mean(cv))
-#
-#     s = int(np.sqrt(len(importance)))
-#     importance = np.array(importance - original).reshape(s, s)
-#
-#     fig, axs = plt.subplots(figsize=(3, 3))
-#     sns.heatmap(importance, annot=True, vmin=0, fmt='0.2f', ax=axs, cbar=False)
-#     plt.show()
+# класс оценки важности признаков (permutation importance)
+class PermutationImportance(object):
+    def __init__(self, model, X, y, cv=5):
+        self.model = model
+        self.cv = cv
+        self.importance = []
+
+    def evaluate_it(self):
+        original_score = self.model.cv(X, y, cv=self.cv).mean()
+
+        for i in range(X.shape[1]):
+            X_new = X.copy()
+            np.random.shuffle(X_new[:, i])
+
+            cv = self.model.cv(X_new, y, cv=self.cv).mean()
+            self.importance.append(np.array(cv - original_score))
+
+        return self.importance
 
 clf = KNN()
-clf.fit(X_train, y_train)
-cv = clf.cv(X, y)
+cv = clf.cv(X, y, cv=5)
 
-print("Cross validation score:", cv, " Mean:", cv.mean())
+print("Cross validation score:", cv, " Its mean:", str(cv.mean())[:4])
+
+importance = PermutationImportance(clf, X, y, cv=5)
+
 
